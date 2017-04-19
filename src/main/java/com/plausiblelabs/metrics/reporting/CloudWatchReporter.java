@@ -1,7 +1,10 @@
 package com.plausiblelabs.metrics.reporting;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
+import com.amazonaws.services.cloudwatch.AmazonCloudWatchClientBuilder;
 import com.amazonaws.services.cloudwatch.model.Dimension;
 import com.amazonaws.services.cloudwatch.model.MetricDatum;
 import com.amazonaws.services.cloudwatch.model.PutMetricDataRequest;
@@ -48,8 +51,11 @@ public class CloudWatchReporter extends ScheduledReporter {
      * one minute rate for meters and timers. Additional metrics may be sent through configuring this class.</p>
      */
     public static class Enabler {
+
         private final String namespace;
-        private final AmazonCloudWatchClient client;
+
+        private final AmazonCloudWatch client;
+
         private final List<DimensionAdder> dimensionAdders = new ArrayList<DimensionAdder>();
 
         private MetricRegistry registry;
@@ -77,7 +83,7 @@ public class CloudWatchReporter extends ScheduledReporter {
          * @param namespace the namespace. Must be non-null and not empty.
          */
         public Enabler(String namespace, AWSCredentialsProvider awsCredentialsProvider) {
-            this(namespace, new AmazonCloudWatchClient(awsCredentialsProvider));
+            this(namespace, AmazonCloudWatchClientBuilder.standard().withCredentials(awsCredentialsProvider).build());
         }
 
         /**
@@ -85,7 +91,7 @@ public class CloudWatchReporter extends ScheduledReporter {
          *
          * @param namespace the namespace. Must be non-null and not empty.
          */
-        public Enabler(String namespace, AmazonCloudWatchClient client) {
+        public Enabler(String namespace, AmazonCloudWatch client) {
             this.namespace = namespace;
             this.client = client;
             this.rateUnit = TimeUnit.SECONDS;
@@ -281,7 +287,7 @@ public class CloudWatchReporter extends ScheduledReporter {
 
     private final String namespace;
 
-    private final AmazonCloudWatchClient client;
+    private final AmazonCloudWatch client;
 
     private final double[] percentilesToSend;
 
@@ -299,7 +305,7 @@ public class CloudWatchReporter extends ScheduledReporter {
 
     private final StandardUnit standardDurationUnit;
 
-    private CloudWatchReporter(MetricRegistry registry, String namespace, AmazonCloudWatchClient client,
+    private CloudWatchReporter(MetricRegistry registry, String namespace, AmazonCloudWatch client,
                                MetricFilter predicate, TimeUnit rateUnit, TimeUnit durationUnit, List<DimensionAdder> dimensionAdders,
                                double[] percentilesToSend, boolean sendOneMinute,
                                boolean sendFiveMinute, boolean sendFifteenMinute, boolean sendMeterSummary,
